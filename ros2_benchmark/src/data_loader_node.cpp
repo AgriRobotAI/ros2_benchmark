@@ -138,20 +138,20 @@ void DataLoaderNode::SetDataServiceCallback(
     // Update the first timestamp value if needed
     if (first_message) {
       first_message = false;
-      first_timestamp_ns_ = message->time_stamp;
-      last_timestamp_ns_ = message->time_stamp;
+      first_timestamp_ns_ = message->send_timestamp;
+      last_timestamp_ns_ = message->send_timestamp;
     } else {
-      if (message->time_stamp < first_timestamp_ns_) {
-        first_timestamp_ns_ = message->time_stamp;
+      if (message->send_timestamp < first_timestamp_ns_) {
+        first_timestamp_ns_ = message->send_timestamp;
       }
-      if (message->time_stamp > last_timestamp_ns_) {
-        last_timestamp_ns_ = message->time_stamp;
+      if (message->send_timestamp > last_timestamp_ns_) {
+        last_timestamp_ns_ = message->send_timestamp;
       }
     }
 
     // Store the message's rosbag-recorded timestamp
     const std::string remapped_topic_name = publishers_[message->topic_name]->get_topic_name();
-    topic_message_timestamps_[remapped_topic_name].push_back(message->time_stamp);
+    topic_message_timestamps_[remapped_topic_name].push_back(message->send_timestamp);
 
     // Publish TF messages if required
     if ((request->publish_tf_messages && message->topic_name == "/tf") ||
@@ -231,8 +231,8 @@ void DataLoaderNode::StartLoadingServiceCallback(
       return;
     }
 
-    if ((message->time_stamp < true_start_time_ns) ||
-      (message->time_stamp > true_end_time_ns))
+    if ((message->send_timestamp < true_start_time_ns) ||
+      (message->send_timestamp > true_end_time_ns))
     {
       continue;
     }
@@ -241,7 +241,7 @@ void DataLoaderNode::StartLoadingServiceCallback(
       while (true) {
         rclcpp::Time now = this->get_clock()->now();
         int64_t diff_to_next_timestamp =
-          (message->time_stamp + timestamp_offset) - now.nanoseconds();
+          (message->send_timestamp + timestamp_offset) - now.nanoseconds();
         if (diff_to_next_timestamp <= 0) {
           break;
         }
